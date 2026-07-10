@@ -1,0 +1,9 @@
+# MCP Configuration snippet to insert into Hermes config.yaml under mcp_servers:
+
+mcp_servers:
+  open-second-brain:
+    command: o2b
+    args: ["mcp", "--scope", "writer", "--vault", "/c/Users/Tiger/Vault"]
+    enabled: true
+    timeout: 30
+    # other fields like api_key, etc., can be kept as needed

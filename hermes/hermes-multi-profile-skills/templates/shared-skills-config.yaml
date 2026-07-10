@@ -1,0 +1,24 @@
+# Minimal config snippet to add to each profile's config.yaml
+# Place under the top-level `skills:` key
+
+skills:
+  external_dirs:
+    - "shared-skills"
+
+# ───────────────────────────────────────────────────────────────
+# Full context example (for reference — do not copy entire file)
+# ───────────────────────────────────────────────────────────────
+# _config_version: 27
+# model:
+#   default: nvidia/nemotron-3-ultra:free
+#   provider: nous
+# skills:
+#   external_dirs:
+#     - "shared-skills"
+#   creation_nudge_interval: 15
+#   inline_shell: true
+#   template_vars: true
+# curator:
+#   enabled: true
+#   interval_hours: 168
+# ...
