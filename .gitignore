@@ -1,0 +1,10 @@
+# Hermes runtime state — managed by the agent, not user content.
+# Keep these out of version control so commits don't churn on agent activity.
+.hub/
+.curator_state
+.usage.json
+.usage.json.lock
+
+# OS noise
+.DS_Store
+Thumbs.db
