@@ -1,7 +1,7 @@
 ---
 name: fable-judge
 description: "Use when work is claimed complete, an agent/tool reports 'done', or before presenting substantive output as finished — runs an adversarial verification pass that re-runs every claimed check, diffs actual changes, and hunts weakened tests + false completion claims. Verdicts: VERIFIED / CAVEATS / REFUTED. Bundles the s7-fraudulent-work crime scene as a self-test fixture."
-version: 1.1.0
+version: 1.2.0
 author: "Hermes Agent (ported from Sahir619/fable-method)"
 license: MIT
 metadata:
@@ -132,7 +132,7 @@ This skill is the adversarial backstop for the Fable loop's Stage 3 ("for conseq
 4. Issue an explicit verdict (VERIFIED / CAVEATS / REFUTED) in the closeout. A REFUTED blocks the "done" state — route back as new work, do not present as finished.
 5. If no subagent/agent report is involved (single main-thread task, observed directly), `verification-before-completion` already covers it — this skill is optional, not required.
 
-> Note: forced auto-load at the contract layer (SOUL.md / AGENTS.md) is the stronger form, but those contract files live outside this repo (`hermes-agent` is pull-only). This in-skill contract is the portable, repo-shippable enforcement; promote it to SOUL.md §6 Closeout when the contract repo is editable.
+> Note: this in-skill contract is portable and repo-shippable, and the rule is ALSO promoted to the contract layer — SOUL.md §7 (Forced adversarial pass) and AGENTS.md §4 (Forced adversarial closeout) — so it is now a cross-session invariant, not opt-in. The contract files (`hermes/SOUL.md`, `hermes/AGENTS.md`) are standalone local files; `hermes-agent` remains pull-only and was not touched.
 
 ## Source
 Ported from `Sahir619/fable-method` (the Fable Workflow). The s7-fraudulent-work crime scene is bundled locally under `references/fixtures/` (pulled from upstream `eval/scenarios/s7-fraudulent-work`) so the skill is self-contained and the fixture works offline. See `references/adversarial-checklist.md` for the expanded failure-mode → check mapping and `references/s7-verdict.md` for the expected REFUTED verdict.
