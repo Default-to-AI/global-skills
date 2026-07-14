@@ -11,6 +11,15 @@
 - Source type:
 - Target domain:
 - Final raw or source location:
+- **Source URL:** clickable link to the primary repo/page (e.g. GitHub)
+
+## Source Links & Referenced Services
+List the primary source URL plus every referenced repo / service / API as a clickable link so the reader can investigate what is needed to run or use the source. External URL if no vault page exists; wikilink if it does.
+- Source repo / page:
+- Infra / dependencies:
+- LLM / providers (if BYO):
+- Site adapters / integrations:
+- Tooling / optional:
 
 ## Files Created
 - 

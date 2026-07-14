@@ -51,6 +51,34 @@ The `Arguments` string approach works reliably across all PS/.NET versions on th
 ## cronjob tool update caveat
 `cronjob action='update'` with no mutation payload can return success while leaving the job unchanged. After an update that should change config, verify by rereading the job/config source of truth instead of assuming the change persisted.
 
+## Source-of-truth rule for cron model/provider changes
+When deciding whether to repin or migrate a cron job's model/provider, do **not** trust a single `cronjob list` echo or a stale `last_status` at face value.
+
+**Required checks before any model/provider migration:**
+1. Inspect the latest output artifact timestamp for the target `job_id` under `~/.hermes/cron/output/<job_id>/`.
+2. Read the newest artifact and classify the failure:
+   - **model/provider issue**: auth failure, spend-guard/provider drift, unsupported route, quota/provider-specific rejection.
+   - **environment/update-window issue**: missing CA bundle during update, transient file-not-found while the app/venv is being replaced, stale scheduler process, delivery package missing, script path mismatch.
+3. Verify the persisted cron config source of truth (on this host, `cron/jobs.json`) rather than trusting the API echo alone.
+4. Only migrate the model/provider if the failure is actually model/provider-related.
+
+**Rule:** stale error statuses from an earlier update window are not evidence that a different model is better. Fix or ignore the stale env churn first, then evaluate model fit.
+
+**Practical implication:**
+- If `jobs.json` shows the intended provider/model but `cronjob list` echoes an older value, treat the list response as cached/stale until disproved.
+- If multiple recent runs on the same provider are `ok`, do not migrate sibling jobs just for consistency.
+
+## Stagger watchdogs away from planned maintenance windows
+If a watchdog monitors a service that is intentionally restarted by a known scheduler event (desktop self-update, image migration, profile restart, backup drain window), do not leave the watchdog exactly on the same cadence boundary.
+
+**Pattern:** move the watchdog a few minutes off the maintenance tick instead of piling on grace-period logic alone.
+- Example: if maintenance commonly hits at `:00/:15/:30/:45`, run the watchdog at `:07/:22/:37/:52`.
+- Keep the script's grace window, but treat schedule staggering as the first line of defense against false alerts.
+
+**Why:** a watchdog that wakes on the same minute as the planned restart can report a healthy maintenance event as an outage, even when the script itself is correct.
+
+**Verification:** after `cronjob action='update'`, re-list the job and confirm `schedule`, `next_run_at`, and `last_status` reflect the intended offset.
+
 ## Core rules
 1. **Prefer real dependency checks over placeholder URLs.** Do not monitor docs pages, fake `/health` endpoints, or provider homepages unless the user explicitly says those surfaces are business-critical.
 2. **Use the cheapest auth-sensitive smoke check that proves the real integration path works.** For provider APIs, prefer a low-cost authenticated list/status/usage endpoint over a generation call.

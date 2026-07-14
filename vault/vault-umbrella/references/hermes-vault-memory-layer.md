@@ -1,6 +1,6 @@
-# Hermes Vault Memory Layer
+# Hermes Vault Memory Layer (RETIRED DESIGN — 2026-07-10)
 
-Use this pattern when Robert wants a better long-term memory system for Hermes **without** prematurely introducing a heavyweight external backend.
+This documents a vault-first 3-tier memory pattern Robert evaluated. **It was not adopted as a live system** — the manual `Vault/Hermes/memory/` folder was flattened because gbrain already indexes the Vault (`vault-tiger`, 1091 pages) and Hermes hot memory + `session_search` cover the rest. Kept as a historical design reference only.
 
 ## Recommended architecture
 
@@ -85,6 +85,6 @@ A good verification fact:
 
 ## Current proven implementation
 
-The currently-proven implementation lives under `C:/Users/Tiger/Vault/Hermes/memory/` and includes a routing note (`retrieval-playbook.md`) plus a project note recording the backend decision (`projects/memory-backend-evaluation.md`).
+**Retired 2026-07-10.** This vault-first `Hermes/memory/` markdown layer was flattened: it duplicated Hermes hot memory + gbrain's `vault-tiger` source (which already indexes the whole Vault, 1091 pages) and nothing auto-read it. A backup copy remains at `~/AppData/Local/hermes/backups/vault-hermes-memory-20260710-205645/`.
 
-Current decision: **vault-first now; Mnemosyne is the most promising later-stage backend if the vault-first model proves insufficient.**
+Current decision: **use gbrain (vault-tiger + gstack-code) + Hermes hot memory + session_search as the active memory system.** Mnemosyne remains the most promising later-stage backend only if that proves insufficient for temporal/graph memory.

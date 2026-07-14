@@ -40,8 +40,19 @@ gbrain's backlinks/orphan count didn't update.
   (e.g. rename `Hermes/Genuine Orphans Index.md` → `Hermes/Orphan Index.md` = slug `hermes/orphan-index`)
   and `capture`/`put` the new slug. The old slug auto-purges in 72h.
 
+## Retiring indexed vault pages or whole folders
+- Deleting markdown from the Vault filesystem is **not enough** when gbrain already indexed those pages.
+  Commit the deletion first, then run `gbrain sync --source <source-id>` so the source walker sees the
+  removal against the committed tree.
+- `page_count` dropping and query-cache stats showing `0 rows` are useful signals, but **not proof** the
+  page vanished from live search. Verify with a search that should uniquely hit the retired page.
+- If search still returns the slug after the filesystem delete + sync, use `gbrain delete <slug>` to
+  hide the lingering page row safely; it remains recoverable for 72h and autopilot later hard-purges it.
+- Do **not** recreate the same slug immediately after `delete`; that falls into the soft-delete trap above.
+  If the goal is retirement, leave it deleted. If the goal is replacement, write the replacement at a new slug.
+
 ## Workflow (de-orphan N notes via a MOC)
-See `references/relink-and-soft-delete-notes.md` for a condensed recovery matrix (basename-link examples, soft-delete symptoms, ghost-edge checks, Windows capture vs pipe guidance).
+See `references/relink-and-soft-delete-notes.md` for a condensed recovery matrix (basename-link examples, soft-delete symptoms, ghost-edge checks, Windows capture vs pipe guidance) and `references/retiring-indexed-vault-pages.md` for retirement-specific cleanup.
 
 1. Build `Hermes/Orphan Index.md` listing every target as `- [[<slug-basename>]] — \`path.md\``.
    Keep prose/short links (avoid list+code-span if a page ever fails to parse — body prose is safest).
@@ -57,6 +68,8 @@ See `references/relink-and-soft-delete-notes.md` for a condensed recovery matrix
   it to enumerate soft-deleted pages. Confirm a specific slug with `gbrain get <slug> --include-deleted`.
 - `gbrain put --file` via stdin pipe can hit a ~45KB Windows pipe-buffer limit; use
   `gbrain capture --file PATH --slug SLUG` instead for any non-trivial file.
+- Historical cron output can embed an **old prompt snapshot**. When validating autopilot cleanup behavior,
+  inspect the live job in `cron/jobs.json` (match on `jobs[].id`) before treating a logged prompt as current.
 - Never guess the resolver matches titles or full paths — it matches slug basename.
 
 ## Verification

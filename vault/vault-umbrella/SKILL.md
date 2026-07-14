@@ -57,7 +57,7 @@ If this skill conflicts with live vault files, the live vault files win.
 | Improve links, duplicates, or orphan handling | `vault-graph-hygiene` |
 | Decide whether to save synthesis to `outputs/` | `vault-compounding-loop` |
 | Evaluate an external repo, framework, prompt pack, or workflow | `vault-external-workflow-evaluation` |
-| Design a vault-backed long-term memory layer for Hermes | See `references/hermes-vault-memory-layer.md` and prefer a vault-first `Hermes/memory/` layer before OSB/MCP bootstrap |
+| Design a vault-backed long-term memory layer for Hermes | Prefer gbrain (vault-tiger + gstack-code sources) + Hermes hot memory + session_search. The manual Vault/Hermes/memory markdown folder was **flattened 2026-07-10** as redundant — do not rebuild it; see `references/hermes-vault-memory-layer.md` for the retired design. |
 
 ## Hard Safety Rules
 

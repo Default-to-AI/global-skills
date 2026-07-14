@@ -145,6 +145,21 @@ Adjust these in `Brain/_brain.yaml` based on your workflow:
 - `stale_evidence_days`: Lower (30-60) for fast-changing topics, Higher (120+) for timeless principles
 - `active.inject_budget_chars`: Increase (12000+) if hitting limits, Decrease (4000-) for laser focus
 
+### Disabling a dead or noisy MCP server without deleting it
+When an MCP endpoint no longer resolves or is generating repeated startup warnings, disable it with the Hermes config CLI instead of editing `config.yaml` directly or deleting the block immediately.
+
+1. Verify the endpoint is genuinely dead with live evidence first.
+2. Disable it via `hermes config set mcp_servers.<server-name>.enabled false`.
+3. Re-read `config.yaml` or `hermes config show` to confirm the flag persisted.
+4. Restart the affected Hermes process or wait for the next process reload so the disabled server is no longer attempted.
+
+Why this pattern is preferred:
+- it uses the sanctioned config write path instead of tripping Hermes's security guard on direct config edits
+- it preserves the URL and surrounding config for later re-enable if the provider restores service
+- Hermes skips `enabled: false` MCP servers entirely, which stops repeated connect retries and warning spam on startup
+
+See `references/disabled-dead-mcp-servers.md` for a concrete NXDOMAIN example and verification pattern.
+
 ## Common Pitfalls
 - Forgetting to restart the dashboard after changing the port; the old port may still be bound.
 - Changing the model/provider but not restarting Hermes, leading to old settings being used in existing sessions.

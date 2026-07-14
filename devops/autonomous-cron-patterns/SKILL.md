@@ -128,7 +128,26 @@ tail -f ~/.hermes/logs/gateway.log
 
 ---
 
-### 6. Hermes CLI Subprocess Hang (Windows + venv)
+### 6. Disabled MCP endpoint leak-stop pattern
+
+**Symptom**: Gateway logs keep emitting warnings like `getaddrinfo failed`, `NXDOMAIN`, or `MCP: 0 tool(s)` for an MCP server that should have been disabled in config.
+
+**Root Cause**: The config edit landed, but the running gateway process is still on stale in-memory config loaded before the edit. `enabled: false` only takes effect after restart.
+
+**Fix pattern**:
+1. Prove the MCP endpoint is actually dead with an independent DNS check.
+2. Confirm the config contains `mcp_servers.<name>.enabled: false`.
+3. Confirm the registration logic skips disabled servers entirely.
+4. Restart the gateway from **outside** the gateway process tree.
+5. Verify there are **no leak lines after the restart boundary** (for example after the last `Starting Hermes Gateway` log line).
+
+**Critical pitfall**: On Hermes desktop, `hermes gateway restart` can be blocked from a terminal session that is itself a child of the running gateway. Use a separate shell or a detached one-shot cron/script for the restart, then a second one-shot verifier cron to grep the post-restart logs.
+
+See `references/gateway-restart-and-disabled-mcp-verification.md`.
+
+---
+
+### 7. Hermes CLI Subprocess Hang (Windows + venv)
 
 **Symptom**: Cron jobs or scripts that call `hermes` CLI subcommands via `subprocess.run()` hang indefinitely — the process never returns, timing out after the configured limit (default 120s). Error message often misleading: `RuntimeError: [Errno 2] No such file or directory` even though the script exists.
 
@@ -174,6 +193,8 @@ show_status(args)
 | Agent tries to use `read_file`/`patch` in cron | Tool executor bug: argument count error | Work around with `terminal` commands (known Hermes bug) |
 | Prompt says "format for report" | Agent produces report, no fixes | Prompt must say "analyze findings, execute fixes, verify, report actions" |
 | No verification step | Agent claims fixes but doesn't confirm | Always include "re-run collector/audit to verify" in prompt |
+| Disabled MCP still logs warnings after config edit | Gateway loaded old config before the change | Restart from outside the gateway process tree, then verify no leak lines **after** the restart boundary |
+| `hermes gateway restart` blocked from current session | Terminal is a child of the running gateway | Use a detached one-shot cron/script or a separate external shell |
 | **Hermes CLI subprocess hang (Windows)** | Cron/script calling `hermes` via subprocess times out; misleading "No such file or directory" error | **Use direct Python imports** (`from hermes_cli.module import func`) instead of subprocess; run with system Python + `sys.path.insert(0, hermes_agent_root)` |
 
 ---
@@ -196,4 +217,5 @@ When converting a report-only cron job to autonomous:
 - `references/cron-workdir-fix.md` — Working directory fix details
 - `references/autonomous-conversion-template.md` — Template prompt for conversion
 - `references/telegram-gateway-network-troubleshooting.md` — Network troubleshooting guide
+- `references/gateway-restart-and-disabled-mcp-verification.md` — Dead MCP endpoint disable/restart/verification pattern
 - `references/hermes-cli-direct-import-patterns.md` — Direct import patterns to avoid Windows venv subprocess hang

@@ -127,6 +127,33 @@ Important distinction:
 - The durable lesson is the **retry pattern around flaky git spawn on Windows/MSYS**, not a blanket claim that gbrain sync is broken.
 - If the patch proves itself by converting a timed-out `rev-parse HEAD` into a successful sync on retry, treat older `<head>` sentinel entries as historical noise and acknowledge them without deleting audit history.
 
+### 8) For Ollama-backed chat on `dream` / `autopilot`, verify real chat and guard against silent skip
+
+If gbrain automation is using an Ollama-compatible chat endpoint (local Ollama or a cloud OpenAI-compatible host exposed through the `ollama` recipe), do not stop at "config parses" or `gbrain doctor` alone.
+
+Pattern discovered on Windows gbrain v0.42.x:
+- gbrain has an `ollama` provider, but **not** a separate `ollama-cloud` recipe.
+- Cloud-hosted Ollama must therefore be wired by keeping `chat_model` in `ollama:<model>` form and pointing the Ollama base URL at the cloud endpoint.
+- For `dream` / `autopilot`, an unreachable chat model may **gracefully skip** the proposal cycle and still exit 0, surfacing JSON like `"status": "skipped"` and/or `"phases": []` rather than a loud auth/transport failure.
+- A bare `chat_fallback_chain` is not sufficient when the command exits successfully after skipping the proposal phase.
+
+Recommended sequence:
+1. Confirm the actual provider reality before patching config: if the source shows only the `ollama` recipe, keep the model in `ollama:<model>` form and route cloud access through the Ollama base URL / API key.
+2. Add a **direct chat probe** that curls the cloud endpoint with the intended model and fails non-zero on unauthorized or missing chat response.
+3. For automation commands that may skip quietly, wrap `gbrain dream` / `autopilot` in a script that:
+   - runs the cloud attempt first,
+   - inspects the JSON output for the skip signature (`"phases": []` or `"status": "skipped"`),
+   - temporarily switches `chat_model` to a locally loaded fallback model,
+   - re-runs locally,
+   - restores the original cloud model afterward.
+4. When the fallback model differs from the cloud model, switch `chat_model` during the local attempt; do not assume the cloud model name exists locally.
+5. In cron jobs, run the chat probe **before** the dream step and report distinctly when cloud chat is down, because otherwise the job may appear to "work" while producing no proposal phases.
+
+Verification:
+- Positive cloud proof = a real `dream`/`autopilot` run yields a non-empty `phases` array including proposal work (for example `propose_takes`), not merely a zero exit code.
+- Positive fallback proof = a forced-skip/mock test shows the wrapper logging the fallback banner, producing proposal phases locally, exiting 0, and restoring `chat_model` to the cloud value afterward.
+- Positive probe proof = the probe exits 0 on a real chat response and non-zero on a bad key / unreachable cloud.
+
 ## Expected signals
 
 ### Benign / informational
@@ -154,6 +181,11 @@ Important distinction:
 - Do not interpret a late writeback migration failure as a DB outage until you have checked whether the Git-backed source has uncommitted changes.
 - Do not auto-commit a dirty user vault just to satisfy a migration. Surface commit vs stash vs skip explicitly.
 - Do not memorialize a one-off `spawnSync git ETIMEDOUT` as "gbrain is broken on Windows". Capture the retry/verification pattern instead.
+- Do not assume a zero exit code from `gbrain dream` / `autopilot` proves the chat model worked when using Ollama-compatible providers; check for non-empty proposal phases.
+- Do not invent a separate `ollama-cloud` provider in gbrain config if the installed gbrain source only exposes the `ollama` recipe.
+- Do not trust `chat_fallback_chain` alone to save `dream` / `autopilot` when unreachable chat causes a graceful skip; add output-aware fallback and a direct chat probe.
+- Do not leave a local fallback wrapper on the local model after completion; restore the cloud `chat_model` after the fallback attempt.
+- Do not store raw provider keys in skills, git, or memory; keep them in env/config only.
 - Do not delete historical `<head>` failure records once the retry fix works; acknowledge them while preserving audit history.
 
 ## Verification checklist
@@ -165,6 +197,7 @@ Important distinction:
 - For stalled Supabase brains, the direct `5432` URL is verified independently before patching config, and `gbrain doctor --fast` becomes responsive afterward.
 - For failed facts→markdown migrations, `git -C <source-local-path> status --porcelain` is checked before retrying.
 - For Windows/MSYS `<head>` timeout cases, a post-patch sync shows a retry log and then finishes `EXIT=0` without recording a fresh open `<head>` failure.
+- For Ollama-compatible cloud chat automation, a direct probe succeeds against the intended endpoint/model, and a real or mocked fallback test proves that `dream`/`autopilot` does not silently succeed with `phases: []`.
 - Only after the above passes do you configure embedding keys/models.
 
 ## Support files
@@ -172,3 +205,4 @@ Important distinction:
 - `references/windows-github-auth-and-no-embed-verification.md` — concrete notes on the Windows HTTPS-auth rewrite and the non-embed verification path.
 - `references/supabase-direct-migrations-and-dirty-tree-refusal.md` — migration recovery pattern for pooled-vs-direct Supabase URLs and git-dirty writeback failures.
 - `references/windows-msys-git-head-timeout-retry.md` — Windows/MSYS `<head>` timeout diagnosis, retry patch pattern, and stale-ledger acknowledgement workflow.
+- `references/ollama-cloud-fallback-and-chat-probe.md` — Ollama-cloud via gbrain's `ollama` provider, skip-signature detection, wrapper fallback pattern, and probe-first cron guidance.

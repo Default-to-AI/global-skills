@@ -21,6 +21,10 @@ Load plan, review critically, execute all tasks, report when complete.
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 5. Before touching files, inspect the current branch/worktree state. If a matching isolated feature worktree already exists and contains partial implementation, resume there after verifying the current file state and running the relevant verification commands. Do not recreate work or blindly re-apply plan steps that are already present.
+6. Re-validate the plan's highest-severity assumptions against the live target workspace before executing. In monorepos or split repos, verify you are reading the governing subproject files rather than a root stub. Re-run the claimed missing test/build/lint command in the real target app before preserving any P0/P1 finding from an earlier review.
+7. If the plan was derived from your own prior review, treat those review claims as provisional until re-checked live. Explicitly retract and rewrite any false positive before implementation.
+
+See `references/revalidating-plan-assumptions.md` for the monorepo/root-stub pitfall and the pre-execution recheck sequence.
 
 ### Step 2: Execute Tasks
 
