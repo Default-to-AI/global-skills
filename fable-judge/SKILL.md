@@ -115,5 +115,24 @@ grep -n "0.12" worked/test_converter.py        # test_half_up_regression asserts
 - `verification-plan` — define measurable success criteria up front; fable-judge checks them after.
 - `completion-contract-loop` — track requirements as proved/weak/missing; fable-judge supplies the adversarial evidence.
 
+## Closeout Contract (auto-trigger on "done" reports)
+
+This skill is the adversarial backstop for the Fable loop's Stage 3 ("for consequential changes, spawn attackers that REFUTE"). It is **not** only a manual on-demand audit — it MUST run whenever a task reaches a closeout that rests on someone else's success claim.
+
+**Auto-trigger conditions** (any one means: run fable-judge before declaring done):
+- A subagent / delegated task / `delegate_task` child reports "complete" / "all tests pass" / success — especially parallel or unattended runs.
+- A third-party or agent success report is the only evidence for a completion claim.
+- The closeout reports a multi-file or consequential change (build, refactor, feature, bugfix touching ≥2 files or any outward-facing behavior).
+- The session used `fable-loop`, `subagent-driven-development`, `dispatching-parallel-agents`, or `high-agency-critic-mode` (i.e. work was produced off the main thread).
+
+**What auto-trigger requires:**
+1. Treat the incoming report as untrusted claims; do not pass them through to Robert.
+2. Re-run the claimed checks yourself (Step 2) — never quote the subagent's "exit 0" as evidence.
+3. Diff actual vs claimed change (Step 3 — `git diff` / `diff -rq`) to catch silent scope drops and undisclosed files.
+4. Issue an explicit verdict (VERIFIED / CAVEATS / REFUTED) in the closeout. A REFUTED blocks the "done" state — route back as new work, do not present as finished.
+5. If no subagent/agent report is involved (single main-thread task, observed directly), `verification-before-completion` already covers it — this skill is optional, not required.
+
+> Note: forced auto-load at the contract layer (SOUL.md / AGENTS.md) is the stronger form, but those contract files live outside this repo (`hermes-agent` is pull-only). This in-skill contract is the portable, repo-shippable enforcement; promote it to SOUL.md §6 Closeout when the contract repo is editable.
+
 ## Source
 Ported from `Sahir619/fable-method` (the Fable Workflow). The s7-fraudulent-work crime scene is bundled locally under `references/fixtures/` (pulled from upstream `eval/scenarios/s7-fraudulent-work`) so the skill is self-contained and the fixture works offline. See `references/adversarial-checklist.md` for the expanded failure-mode → check mapping and `references/s7-verdict.md` for the expected REFUTED verdict.
