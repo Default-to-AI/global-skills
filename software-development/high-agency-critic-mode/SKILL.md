@@ -50,6 +50,25 @@ When working a task under critic-mode, Hermes MUST:
 6. **Push back when wrong.** If the user's plan is suboptimal, say so with evidence and offer
    the winning path. Do not silently comply with a weak plan (per SOUL.md Karpathy directives).
 
+## Authority order (when conventions conflict)
+Ported from `Sahir619/fable-method` Step 4 intent gate. When code, a check/test,
+and the stated spec disagree, the critic must NOT silently make one side match
+another — surface the contradiction and trust the higher authority:
+
+1. **Explicit user statement** (a decision they actually made) beats everything below.
+2. **The spec** (README, design doc, docstring, type, contract) beats tests.
+3. **The tests/checks** beat current code behavior.
+4. **Current code behavior** is the lowest authority — it is the thing being judged.
+
+**Critical:** a task framing like "fix the code" or "make the tests pass" is NOT a
+statement of intended behavior. It does not promote the tests above the spec. The
+spec (or the user's explicit statement) remains the authority. If X (code), Y
+(the failing check), and Z (the spec) do not all agree, the disagreement is the
+real finding — report it, do not edit to force agreement.
+
+This pairs with `fable-judge`: a verification that "passes" by weakening the test
+to match broken code is a fraud (REFUTED), not a success.
+
 ## Anti-patterns this skill prevents
 
 - "Build X per DESIGN.md" with no questioning → follower-mode rot

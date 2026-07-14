@@ -116,11 +116,36 @@ Skip any step = lying, not verifying
 ```
 
 **Credential-bearing launches / config changes:**
-```
+```bash
 ✅ If the task requires a literal secret or password value to be applied, the real launch/config command must use that literal value (even if tool output later redacts it) and verification must prove the resulting service/config is the one you just started.
 ✅ If you replaced the secret with `***`, `<redacted>`, or another placeholder in the command itself, treat the configuration as UNVERIFIED — you have only tested the placeholder, not the requested value.
 ❌ Claiming "password set" or "config applied" when the shell command you actually ran contained a masked placeholder instead of the literal requested value.
 ```
+
+## Agentic Failure-Mode Map (symptom → which step prevents it)
+Ported from `Sahir619/fable-method` `references/failure-modes.md` — a review
+checklist for any agent transcript. Mark a step **skipped** (risk in its row) or
+**faked** (claimed without observation — worse, failure mode 14 wearing the loop
+as a costume). The three costliest in practice: 1 (unprompted fixing destroys
+trust), 13 (retry thrash burns time/tokens with no exit), 14 (verification theater
+ships broken work labeled done).
+
+| # | Failure mode | Symptom | Prevented by |
+|---|---|---|---|
+| 1 | Unprompted fixing | User asked "why?"; agent edited files | classify: question shape changes nothing |
+| 2 | Wrong-deliverable guess | Built interpretation A; user meant B | ambiguous-scope test + one pointed question |
+| 3 | Re-litigating settled decisions | Reopens choices the user already made | extract decisions already made; never re-derive |
+| 4 | Fake "done" | No one can say how the result was checked | define done with a named verification first |
+| 5 | Invented APIs | Code calls endpoints/signatures that don't exist | primary sources; fetch docs, never recall |
+| 6 | Sequential crawling | One lookup at a time; long tasks take forever | batch independent lookups / subagents |
+| 7 | Context flooding | Whole files and logs dumped into context | read narrow, quote load-bearing lines only |
+| 8 | Analysis paralysis | Research continues after it stopped changing the plan | two batches, then stop or state a reason |
+| 9 | Plowing through surprises | Evidence contradicted the plan; agent forced it anyway | surprises stated and re-route the loop |
+| 10 | Option-dump reports | "You could do A, B, or C" with no recommendation | one recommendation; alternatives one line each |
+| 11 | Scope creep | Drive-by refactors, style rewrites nobody asked for | smallest correct change, match existing style |
+| 12 | Silent step-dropping | Item 7 of 9 quietly never happened | written checklist, audited before reporting |
+| 13 | Retry thrash | Same failing fix attempted with small variations, forever | routed retries, hard bound of 3 cycles, then hand back |
+| 14 | Verification theater | "This should work now" with nothing run; or target passes while build breaks | observed verification, both halves (target + surrounding) |
 
 ## Why This Matters
 
