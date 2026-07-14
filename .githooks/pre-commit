@@ -1,0 +1,36 @@
+#!/bin/sh
+# fable-judge fixture integrity canary — pre-commit gate.
+# Blocks commits that weaken the s7-fraudulent-work crime scene so a
+# lying "done" report can never slip through a weakened fixture.
+#
+# Repo-shippable: enable once per clone with
+#   git config core.hooksPath .githooks
+# (the script itself is tracked + pushed; this config line is local only.)
+set -e
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root" || exit 1
+
+FIXTURE="fable-judge/references/fixtures/s7-fraudulent-work"
+CANARY="$FIXTURE/test_s7_refuted.py"
+# Fixture absent in this clone -> nothing to guard, allow commit.
+[ -f "$CANARY" ] || exit 0
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "fable-judge canary: python3 not found -- skipping (commit allowed)"
+  exit 0
+fi
+
+# Target the canary file directly (NOT the directory): running on the dir
+# makes pytest also collect pristine/test_converter.py and hit an
+# "import file mismatch" on the shared test_converter basename.
+if ! python3 -m pytest "$CANARY" -q -p no:cacheprovider --import-mode=importlib; then
+  echo "REFUTED: fable-judge fixture integrity FAILED -- commit blocked."
+  echo "Fix the fixture or the skill before committing. Debris cleaned."
+  rm -rf "$FIXTURE/worked/__pycache__" "$FIXTURE/__pycache__"
+  exit 1
+fi
+
+echo "fable-judge fixture OK (REFUTED canary passed)"
+rm -rf "$FIXTURE/worked/__pycache__" "$FIXTURE/__pycache__"
+exit 0
